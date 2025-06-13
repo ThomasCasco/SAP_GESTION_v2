@@ -12,23 +12,28 @@ export default async function handler(req, res) {
 
   try {
     console.log('🔄 Conectando al servidor Express via ngrok...');
+    console.log('🌍 Environment:', process.env.NODE_ENV);
     
     // URL del servidor Express a través de ngrok
-    // Esta URL debe configurarse como variable de entorno
     const serverUrl = process.env.EXPRESS_SERVER_URL || 'http://localhost:4353';
     const apiUrl = `${serverUrl}/api/productos-sap`;
     
     console.log(`📡 Haciendo request a: ${apiUrl}`);
+    console.log('🔑 Server URL configured:', serverUrl ? 'Yes' : 'No');
 
-    // Realizar request al servidor Express
+    // Realizar request al servidor Express con timeout más corto para Vercel
+    const timeoutMs = process.env.NODE_ENV === 'production' ? 20000 : 30000;
+    
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'NextJS-SAP-Client/1.0'
+        'User-Agent': 'NextJS-SAP-Client/1.0',
+        'ngrok-skip-browser-warning': 'true',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
       },
-      // Timeout de 30 segundos
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(timeoutMs)
     });
 
     if (!response.ok) {
@@ -59,30 +64,43 @@ export default async function handler(req, res) {
 
     console.log(`📊 Productos procesados: ${productos.length}`);
 
-    // Retornar los productos en el formato esperado por el frontend
-    res.status(200).json(productos);
+    // ✅ CORRECCIÓN: Retornar en el formato que espera el frontend
+    res.status(200).json({
+      success: true,
+      data: productos,
+      total: productos.length,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('❌ Error obteniendo productos del servidor Express:', error.message);
+    console.error('❌ Error type:', error.name);
+    console.error('❌ Full error:', error);
     
     // Determinar el tipo de error y responder apropiadamente
     if (error.name === 'AbortError') {
+      console.error('⏰ Timeout error - servidor tardó demasiado');
       res.status(408).json({ 
         success: false, 
         message: 'Timeout conectando al servidor Express',
-        error: 'La conexión tardó demasiado tiempo'
+        error: 'La conexión tardó demasiado tiempo',
+        details: `Timeout después de ${process.env.NODE_ENV === 'production' ? 20 : 30} segundos`
       });
-    } else if (error.message.includes('fetch')) {
+    } else if (error.message.includes('fetch') || error.code === 'ENOTFOUND') {
+      console.error('🌐 Network error - no se pudo conectar');
       res.status(503).json({ 
         success: false, 
         message: 'Servidor Express no disponible',
-        error: 'No se pudo conectar al servidor de datos'
+        error: 'No se pudo conectar al servidor de datos',
+        details: error.message
       });
     } else {
+      console.error('💥 Generic error');
       res.status(500).json({ 
         success: false, 
         message: 'Error interno del servidor',
-        error: error.message 
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

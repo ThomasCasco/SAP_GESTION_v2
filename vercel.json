@@ -1,14 +1,18 @@
 {
   "functions": {
     "pages/api/*.js": {
-      "maxDuration": 30
+      "maxDuration": 25
     }
   },
-  "env": {
-    "DB_SERVER": "192.168.100.164",
-    "DB_DATABASE": "CWSGImsa",
-    "DB_DOMAIN": "IMSA",
-    "DB_USERNAME": "A_TCasco",
-    "DB_PASSWORD": "Tiranytar.2023!"
-  }
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
 } 
