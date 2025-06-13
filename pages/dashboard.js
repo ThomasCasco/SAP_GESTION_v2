@@ -21,7 +21,15 @@ export default function Dashboard() {
       const response = await fetch('/api/products');
       const data = await response.json();
 
-      if (data.success) {
+      // ✅ COMPATIBILIDAD: Manejar tanto el formato nuevo como el antiguo
+      if (Array.isArray(data)) {
+        // Formato antiguo: directamente un array
+        console.log('📦 Formato de array detectado, convirtiendo...');
+        setProducts(data);
+        setFilteredProducts(data);
+      } else if (data.success && data.data) {
+        // Formato nuevo: objeto con success y data
+        console.log('✅ Formato correcto detectado');
         setProducts(data.data);
         setFilteredProducts(data.data);
       } else {
