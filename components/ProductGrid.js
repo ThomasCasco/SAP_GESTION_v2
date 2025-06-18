@@ -164,7 +164,7 @@ export default function ProductGrid({ products = [], loading = false, onFiltered
         cellClass: 'text-gray-700'
       },
       {
-        headerName: 'Stock Actual',
+        headerName: 'Stock Actual Mts',
         field: 'StockProducto',
         flex: 1,
         minWidth: 120,
