@@ -115,7 +115,7 @@ export default function KPICards({ products = [] }) {
     {
       title: 'Promedio Stock',
       value: kpis.promedioStock.toFixed(0),
-      subtitle: 'unidades',
+      subtitle: 'Metros',
       icon: '📊',
       gradient: 'from-gray-600 to-gray-800',
       textColor: 'text-white',
